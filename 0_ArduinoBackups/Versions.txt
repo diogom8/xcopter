@@ -1,0 +1,3 @@
+--- Versions Description ----
+XCopter_9_03_1829: Working. Iterations to save are defined both in arduino and processing code. Missing to define a loop frequency in arduino side.
+XCopter_1_07_1915: Loop frequency defined. Fully operational to read sensor data and send by serial.
