@@ -20,5 +20,6 @@ MIT License
 
 ## Acknowledgments
 
-N/A
-
+* pavelmc (https://github.com/pavelmc/amake)
+	- Verify: amake -v mega2560 <file>
+	- Upload: amake -u mega2560 <file> /dev/ttyACM0

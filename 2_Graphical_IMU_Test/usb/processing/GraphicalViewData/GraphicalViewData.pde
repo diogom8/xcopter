@@ -151,8 +151,8 @@ void serialEvent(Serial p) {
     String[] dataString = split(inString, " ");
     if(dataString[0].equals("#") && dataString.length == 3)
     {
-      phi = float(dataString[1]);
-      theta = float(dataString[2]);
+      phi = float(dataString[2]);
+      theta = -float(dataString[1]);
     }
   } catch (Exception e) {
       println("Caught Exception");
