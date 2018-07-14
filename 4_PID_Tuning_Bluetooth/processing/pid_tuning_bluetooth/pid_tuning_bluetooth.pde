@@ -2,6 +2,8 @@ import controlP5.*;
 
 ControlP5 cp5;
 Toggle stopToggle;
+Textfield text_PGain, text_DGain, text_IGain;
+Bang bang_SetGains;
 
 float quadScale = 1.5;
 
@@ -52,7 +54,7 @@ void setup() {
     cp5 = new ControlP5(this);
     
     stopToggle = cp5.addToggle("stopValue")
-     .setMode(CENTER)
+     .setMode(ControlP5.DEFAULT)
      .setPosition(800,50)
      .setSize(200,50)
      .setColorActive(color(255,0,0))      //Active
@@ -62,12 +64,66 @@ void setup() {
      .setCaptionLabel("RUNNING")
      .setColorCaptionLabel(0)
      ;
-
-  
+     
+    //Textfields for controller gains
+    text_PGain = cp5.addTextfield("P")
+     .setPosition(800,300)
+     .setSize(100,40)
+     .setFont(createFont("arial",20))
+     .setFocus(true) //not sure what this focus means
+     .setCaptionLabel("P")
+     .setColorCaptionLabel(0)
+     ;
+     
+     text_IGain = cp5.addTextfield("I")
+     .setPosition(800,400)
+     .setSize(100,40)
+     .setFont(createFont("arial",20))
+     .setFocus(true) //not sure what this focus means
+     .setCaptionLabel("I")
+     .setColorCaptionLabel(0)
+     ;
+     
+     text_DGain = cp5.addTextfield("D")
+     .setPosition(800,500)
+     .setSize(100,40)
+     .setFont(createFont("arial",20))
+     .setFocus(true) //not sure what this focus means
+     .setCaptionLabel("D")
+     .setColorCaptionLabel(0)
+     ;
+     
+     //bang to send new controller values
+     bang_SetGains = cp5.addBang("SET")
+     .setPosition(1000,400)
+     .setSize(80,40)
+     ;
+     bang_SetGains.getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER);
 }
 
 void draw()  {
   
-   
+    //Motor Values text
+    String M1Val = "100";
+    String M2Val = "90";
+    String M3Val = "80";
+    String M4Val = "40";
+    
+    fill(0,0,0);textSize(22);
+    textAlign(CENTER,CENTER);
+    text(M4Val + "%", -cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M3Val + "%", cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M2Val + "%", cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M1Val + "%", -cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    
+    //Current controller gains
+    fill(160,160,160);
+    text("PCURR", text_PGain.getPosition()[0] + 150, text_PGain.getPosition()[1]);
+    text("ICURR", text_IGain.getPosition()[0] + 150, text_IGain.getPosition()[1]);
+    text("DCURR", text_DGain.getPosition()[0] + 150, text_DGain.getPosition()[1]);
   
+}
+
+public void SET() {
+  cp5.get(Textfield.class,"textValue").clear();
 }
