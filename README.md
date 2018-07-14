@@ -22,4 +22,5 @@ MIT License
 
 * pavelmc (https://github.com/pavelmc/amake)
 	- Verify: amake -v mega2560 <file>
-	- Upload: amake -u mega2560 <file> /dev/ttyACM0
+	- Upload: amake -u mega2560 <file> /dev/ttyACM0 /Note: I'm not being able to use amake in multiple file projects,e.g. main of this project
+

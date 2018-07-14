@@ -1,11 +1,20 @@
-import controlP5.*;
+import processing.serial.*;
 
+Serial  myPort;
+int     lf = 10;       //ASCII linefeed
+String  inString;      //String for testing serial communication
+
+import controlP5.*;
 ControlP5 cp5;
 Toggle stopToggle;
 Textfield text_PGain, text_DGain, text_IGain;
 Bang bang_SetGains;
 
 float quadScale = 1.5;
+
+int M0Val, M1Val, M2Val, M3Val;
+float kp, ki, kd;
+float phi, ref_phi, theta, ref_theta;
 
 void setup() {
 
@@ -14,42 +23,6 @@ void setup() {
     //Create window in white
     size(1200,600);
     background(255,255,255);
-    
-    //A. Title
-    fill(255,0,0);ellipse(20,20,5,5);//reference point
-    fill(0,0,0);
-    textAlign(LEFT,TOP);
-    textSize(35);
-    text("XCOPTER - PID Tuning UI",20,20);
-    
-    //B. Draw quad-copter X configuration
-    pushMatrix();
-    translate(250,300); //Center of the quadcopter
-    fill(0,0,0);
-    ellipse(0, 0, quadScale*60, quadScale*60); //Middle circle
-    
-    //Arms
-    rectMode(CENTER);
-    rotate(PI/4.0); //Positive -> Clockwise
-    rect(0, 0, quadScale*10, quadScale*300);
-    rotate(PI/2.0); //Positive -> Clockwise
-    rect(0, 0, quadScale*10, quadScale*300);
-    
-    //Motors
-    fill(255,255,255);
-    ellipse(0,150*quadScale,quadScale*25,quadScale*25);ellipse(0,-150*quadScale,quadScale*25,quadScale*25);
-    rotate(PI/2.0); //Positive -> Clockwise
-    ellipse(0,150*quadScale,quadScale*25,quadScale*25);ellipse(0,-150*quadScale,quadScale*25,quadScale*25);
-    
-    //Motors tags
-    rotate(3.0*PI/4.0); //Original position
-    fill(255,190,0);textSize(15);
-    textAlign(CENTER,CENTER);
-    text("M4",-cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
-    text("M3",cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
-    text("M2",cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
-    text("M1",-cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
-    popMatrix();
     
     cp5 = new ControlP5(this);
     
@@ -99,31 +72,111 @@ void setup() {
      .setSize(80,40)
      ;
      bang_SetGains.getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER);
+     
+    //Setup serial
+    printArray(Serial.list());
+    myPort = new Serial(this, "/dev/rfcomm0", 9600);
+    myPort.clear();
+    myPort.bufferUntil(lf);
 }
 
 void draw()  {
-  
+    background(255,255,255);
+    drawStatics();
     //Motor Values text
-    String M1Val = "100";
-    String M2Val = "90";
-    String M3Val = "80";
-    String M4Val = "40";
-    
     fill(0,0,0);textSize(22);
     textAlign(CENTER,CENTER);
-    text(M4Val + "%", -cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
-    text(M3Val + "%", cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
-    text(M2Val + "%", cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
-    text(M1Val + "%", -cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M3Val, -cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M2Val, cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M1Val, cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M0Val, -cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
     
     //Current controller gains
     fill(160,160,160);
     text("PCURR", text_PGain.getPosition()[0] + 150, text_PGain.getPosition()[1]);
     text("ICURR", text_IGain.getPosition()[0] + 150, text_IGain.getPosition()[1]);
     text("DCURR", text_DGain.getPosition()[0] + 150, text_DGain.getPosition()[1]);
+    
+    //Current attitude and set points
+    textAlign(LEFT);fill(0,0,0);
+    text("Pitch", 800, 150);
+    text("Roll", 950, 150);
+    fill(0,0,255);
+    text((float) phi, 800, 175);
+    text((float) theta, 950, 175);
+    
+    fill(160,160,160);textSize(18);
+    text(ref_phi, 800, 200);
+    text(ref_theta, 950, 200);
   
 }
 
 public void SET() {
-  cp5.get(Textfield.class,"textValue").clear();
+  println(stopToggle.getValue());
+}
+
+void serialEvent(Serial p) {
+
+    
+  inString = p.readString();
+  try {
+    // Parse the data
+    String[] dataString = split(inString, " ");
+    if(dataString[0].equals("#") && dataString.length == 12)
+    {
+      M0Val = int(dataString[1]);
+      M1Val = int(dataString[2]);
+      M2Val = int(dataString[3]);
+      M3Val = int(dataString[4]);
+      kp = float(dataString[5]);
+      ki = float(dataString[6]);
+      kd = float(dataString[7]);
+      phi = float(dataString[8]);
+      ref_phi = float(dataString[9]);
+      theta = float(dataString[10]);
+      ref_theta = float(dataString[11]);
+    }
+  } catch (Exception e) {
+      println("Caught Exception");
+  }
+}
+
+void drawStatics() {
+ 
+    //A. Title
+    //fill(255,0,0);ellipse(20,20,5,5);//reference point
+    fill(0,0,0);
+    textAlign(LEFT,TOP);
+    textSize(35);
+    text("XCOPTER - PID Tuning UI",20,20);
+    
+    //B. Draw quad-copter X configuration
+    pushMatrix();
+    translate(250,300); //Center of the quadcopter
+    fill(0,0,0);
+    ellipse(0, 0, quadScale*60, quadScale*60); //Middle circle
+    
+    //Arms
+    rectMode(CENTER);
+    rotate(PI/4.0); //Positive -> Clockwise
+    rect(0, 0, quadScale*10, quadScale*300);
+    rotate(PI/2.0); //Positive -> Clockwise
+    rect(0, 0, quadScale*10, quadScale*300);
+    
+    //Motors
+    fill(255,255,255);
+    ellipse(0,150*quadScale,quadScale*25,quadScale*25);ellipse(0,-150*quadScale,quadScale*25,quadScale*25);
+    rotate(PI/2.0); //Positive -> Clockwise
+    ellipse(0,150*quadScale,quadScale*25,quadScale*25);ellipse(0,-150*quadScale,quadScale*25,quadScale*25);
+    
+    //Motors tags
+    rotate(3.0*PI/4.0); //Original position
+    fill(255,190,0);textSize(15);
+    textAlign(CENTER,CENTER);
+    text("M3",-cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
+    text("M2",cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
+    text("M1",cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
+    text("M0",-cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
+    popMatrix();
+
 }

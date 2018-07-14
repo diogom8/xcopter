@@ -50,7 +50,7 @@ float sensors_cal[6] = {0,0,0,0,0,0};
 unsigned long t_prev = 0;
 unsigned long t_prev_send = 0;
 
-SoftwareSerial BTSerial(11, 12); // RX, TX
+SoftwareSerial BTSerial(11, 12); // RX, TX (IMPORTANT: THIS IS THE RX,TX pair of ARDUINO BOARD. SO THE BLUETOOTH PAIR WILL BE THE OPPOSITE!)
 
 	
 void read_sensor(int ADDRESS,int REGISTER,int n_bytes,float buffer[],float CONVERSION)
