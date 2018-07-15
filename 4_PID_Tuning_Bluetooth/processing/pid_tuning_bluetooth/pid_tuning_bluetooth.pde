@@ -3,6 +3,10 @@ import processing.serial.*;
 Serial  myPort;
 int     lf = 10;       //ASCII linefeed
 String  inString;      //String for testing serial communication
+boolean sendData = false;
+String stop_bt = "0";
+String setGains_bt = "0";
+String stringToSend;
 
 import controlP5.*;
 ControlP5 cp5;
@@ -93,9 +97,9 @@ void draw()  {
     
     //Current controller gains
     fill(160,160,160);
-    text("PCURR", text_PGain.getPosition()[0] + 150, text_PGain.getPosition()[1]);
-    text("ICURR", text_IGain.getPosition()[0] + 150, text_IGain.getPosition()[1]);
-    text("DCURR", text_DGain.getPosition()[0] + 150, text_DGain.getPosition()[1]);
+    text(kp, text_PGain.getPosition()[0] + 150, text_PGain.getPosition()[1]);
+    text(ki, text_IGain.getPosition()[0] + 150, text_IGain.getPosition()[1]);
+    text(kd, text_DGain.getPosition()[0] + 150, text_DGain.getPosition()[1]);
     
     //Current attitude and set points
     textAlign(LEFT);fill(0,0,0);
@@ -108,11 +112,27 @@ void draw()  {
     fill(160,160,160);textSize(18);
     text(ref_phi, 800, 200);
     text(ref_theta, 950, 200);
+    
+    //Send data
+    if(sendData == true){sendData();sendData = false;}
   
 }
 
 public void SET() {
-  println(stopToggle.getValue());
+  //println(stopToggle.getValue());
+  setGains_bt = "1";
+  sendData = true;
+}
+
+void sendData() {
+  String kp_new = text_PGain.getText();
+  //print(kp_new);
+  String ki_new = text_IGain.getText();
+  String kd_new = text_DGain.getText();
+  
+ stringToSend = '#' + stop_bt + setGains_bt + kp_new + ' ' + ki_new + ' ' + kd_new + '*';
+ println(stringToSend);
+ myPort.write(stringToSend);
 }
 
 void serialEvent(Serial p) {

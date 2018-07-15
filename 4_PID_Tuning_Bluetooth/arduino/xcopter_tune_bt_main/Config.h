@@ -2,7 +2,7 @@
 
 //LED Pin
 #define R_LED	13
-#define	G_LED	12	  
+#define	G_LED	10	  
 //*************************************
 //***********MOTORS CONFIG**************
 

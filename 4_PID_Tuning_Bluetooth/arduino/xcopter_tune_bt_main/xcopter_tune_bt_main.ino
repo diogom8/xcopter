@@ -55,6 +55,10 @@ float ai = ki*T_LOOP;
 float ad = kd/(kd+N*T_LOOP);
 float bd = -kd/(kd+N*T_LOOP);
 
+/* Read data via Bluetooh */
+boolean stop_bt = false;
+boolean setGains_bt = false;
+String readString;
 
 void setup() {
     // setup serial
@@ -87,7 +91,7 @@ void loop() {
       timer_control = millis();
       update_ControlVariables();
       
-      if(RxLoss_flag == false){
+      if(RxLoss_flag == false and stop_bt == false){
         ControlPID();
       }
       else
@@ -110,7 +114,7 @@ void loop() {
     //Send data
     if((millis()-timer_bt)/1000.0 >= T_BT)
     {
-      digitalWrite(R_LED,!digitalRead(R_LED));
+      //digitalWrite(R_LED,!digitalRead(R_LED));
       timer_bt = millis();
 
       BTSerial.print(F("# "));//StartFlag
@@ -136,5 +140,45 @@ void loop() {
       BTSerial.print(F(" "));
       BTSerial.print(ref_theta,2);//theta reference (pitch)
       BTSerial.println(F(""));
+    }
+
+    //Read data (the data we receive is 18 bytes long + carriage return)
+    if(BTSerial.available())
+    {
+      char c = BTSerial.read();
+      if(c == '*') //Ending character
+      { 
+        if(readString.startsWith("#"))//valid data
+        { 
+          //Emergency stop
+          if(readString.substring(1, 2)  == "1"){
+            stop_bt = true;
+          }
+          else{
+            stop_bt = false;
+          }
+          //Set gains
+          if(readString.substring(2, 3)  == "1"){
+            setGains_bt = true;
+            int ind1 = readString.indexOf(' ');  //finds location of first Space
+            kp = readString.substring(3, ind1).toFloat();
+            int ind2 = readString.indexOf(' ',ind1+1);  //finds location of second Space
+            ki = readString.substring(ind1+1, ind2).toFloat();
+            int ind3 = readString.indexOf('*',ind2+1);  //finds location of termination char *
+            kd = readString.substring(ind2+1, ind3).toFloat();
+          }
+          else{
+            setGains_bt = false;
+          }
+          //Clean buffer
+          while(Serial.available()>0){Serial.read();}
+          readString=""; //clears variable for new input
+          
+        }
+        digitalWrite(R_LED,!digitalRead(R_LED));
+      }
+      else{
+        readString += c; //makes the string readString
+      }
     }
 }
