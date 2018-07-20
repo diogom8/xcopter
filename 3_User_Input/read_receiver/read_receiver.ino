@@ -1,6 +1,6 @@
 //int motor = 6;
 //int RedLed = 11;
-int GreenLed = 12;
+int GreenLed = 10;
 unsigned long OnDuration;
 //Time
 unsigned long FullDuration = 0;
