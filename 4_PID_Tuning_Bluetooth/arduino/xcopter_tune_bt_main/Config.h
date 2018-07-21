@@ -81,8 +81,8 @@
 #define N 10
 #define ai ki*T_LOOP
 #define ad kd/(kd+N*T_LOOP)
-#define bd -kd/(kd+N*T_LOOP)*/
+#define bd -kd/(kd+N*T_LOOP)
 
-//#define kp_r 0.1
+#define kp_r 0.1*/
 //***************************************
 

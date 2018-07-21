@@ -90,10 +90,10 @@ void draw()  {
     //Motor Values text
     fill(0,0,0);textSize(22);
     textAlign(CENTER,CENTER);
-    text(M3Val, -cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
-    text(M2Val, cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
-    text(M1Val, cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
-    text(M0Val, -cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M0Val, -cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M3Val, cos(PI/4.0)*quadScale*150 + 250, -sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M2Val, cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
+    text(M1Val, -cos(PI/4.0)*quadScale*150 + 250, sin(PI/4.0)*quadScale*150 + 300 + quadScale*25);
     
     //Current controller gains
     fill(160,160,160);
@@ -110,8 +110,8 @@ void draw()  {
     text((float) theta, 950, 175);
     
     fill(160,160,160);textSize(18);
-    text(ref_phi, 800, 200);
-    text(ref_theta, 950, 200);
+    text(ref_theta, 800, 200);
+    text(ref_phi, 950, 200);
     
     //Send data
     if(sendData == true){sendData();sendData = false;}
@@ -144,6 +144,7 @@ void serialEvent(Serial p) {
     String[] dataString = split(inString, " ");
     if(dataString[0].equals("#") && dataString.length == 12)
     {
+      println(inString);
       M0Val = int(dataString[1]);
       M1Val = int(dataString[2]);
       M2Val = int(dataString[3]);
@@ -155,6 +156,11 @@ void serialEvent(Serial p) {
       ref_phi = float(dataString[9]);
       theta = float(dataString[10]);
       ref_theta = float(dataString[11]);
+    }
+    else {
+      //Clean buffer
+      println("Clean Buffer");
+      while(p.available()>0){p.read();}
     }
   } catch (Exception e) {
       println("Caught Exception");
@@ -193,10 +199,10 @@ void drawStatics() {
     rotate(3.0*PI/4.0); //Original position
     fill(255,190,0);textSize(15);
     textAlign(CENTER,CENTER);
-    text("M3",-cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
-    text("M2",cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
-    text("M1",cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
-    text("M0",-cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
+    text("M0",-cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
+    text("M3",cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
+    text("M2",cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
+    text("M1",-cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
     popMatrix();
 
 }

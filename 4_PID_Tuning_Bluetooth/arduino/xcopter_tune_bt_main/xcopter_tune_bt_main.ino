@@ -42,7 +42,7 @@ unsigned long proof_t = 0;
 int ZeromSpeed[4] = {MOTOR_MIN_LEVEL};
 
 /*Control Tuning*/
-float kp = 2.0;
+float kp = 0.0;
 float ki = 0.0;
 float kd = 0.0;
 float kp_r = 0.0;
@@ -93,7 +93,10 @@ void loop() {
       }
       else
       {
-        mSpeed[4] = {MOTOR_MIN_LEVEL};
+        for(int i=0;i<4;i++){
+          mSpeed[i] = MOTOR_MIN_LEVEL;
+          mSpeedSat[i] = MOTOR_MIN_LEVEL;
+        }
         set_motors();
                     
        }
