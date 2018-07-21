@@ -27,11 +27,8 @@ float I_pitch = 0.0,D_pitch = 0.0;
 float phi_prev = 0.0,err_phi_prev = 0.0;
 float theta_prev = 0.0,err_theta_prev = 0.0;
 /*motors*/
-int m0_spd = 0;
-int m1_spd = 0; 
-int m2_spd = 0;
-int m3_spd = 0;
-
+int mSpeed[4] = {0,0,0,0}; //Requested motors speed by controller or user
+int mSpeedSat[4] = {0,0,0,0}; //Requested motors speed to ESC (after filtering of mSpeed in set_motors function)
 
 /*RX*/
 int RxLossCount = 0;
@@ -96,7 +93,8 @@ void loop() {
       }
       else
       {
-        set_motors(ZeromSpeed);
+        mSpeed[4] = {MOTOR_MIN_LEVEL};
+        set_motors();
                     
        }
       
@@ -118,13 +116,13 @@ void loop() {
       timer_bt = millis();
 
       BTSerial.print(F("# "));//StartFlag
-      BTSerial.print(m0_spd);//motor 0 speed
+      BTSerial.print(mSpeedSat[0]);//motor 0 speed
       BTSerial.print(F(" "));
-      BTSerial.print(m1_spd);//motor 1 speed
+      BTSerial.print(mSpeedSat[1]);//motor 1 speed
       BTSerial.print(F(" "));
-      BTSerial.print(m2_spd);//motor 2 speed
+      BTSerial.print(mSpeedSat[2]);//motor 2 speed
       BTSerial.print(F(" "));
-      BTSerial.print(m3_spd);//motor 3 speed
+      BTSerial.print(mSpeedSat[3]);//motor 3 speed
       BTSerial.print(F(" "));
       BTSerial.print(kp,2);//p gain
       BTSerial.print(F(" "));
@@ -170,12 +168,13 @@ void loop() {
           else{
             setGains_bt = false;
           }
-          //Clean buffer
-          while(Serial.available()>0){Serial.read();}
-          readString=""; //clears variable for new input
-          
+                    
         }
+        //Clean buffer
+        while(Serial.available()>0){Serial.read();}
+        readString=""; //clears variable for new input
         digitalWrite(R_LED,!digitalRead(R_LED));
+        
       }
       else{
         readString += c; //makes the string readString

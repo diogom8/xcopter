@@ -40,11 +40,11 @@ void ControlPID(){
     r_spd = P_r;
   }
   /*Motors Speed*/
-  m0_spd = lift_spd + roll_spd + pitch_spd + r_spd;
-  m1_spd = lift_spd + roll_spd - pitch_spd - r_spd;	
-  m2_spd = lift_spd - roll_spd - pitch_spd + r_spd;
-  m3_spd = lift_spd - roll_spd + pitch_spd - r_spd;
+  mSpeed[0] = lift_spd + roll_spd + pitch_spd + r_spd;
+  mSpeed[1] = lift_spd + roll_spd - pitch_spd - r_spd;	
+  mSpeed[2] = lift_spd - roll_spd - pitch_spd + r_spd;
+  mSpeed[3] = lift_spd - roll_spd + pitch_spd - r_spd;
+  
   /*Send Motors Command*/
-  int mSpeed[4] = {m0_spd,m1_spd,m2_spd,m3_spd};
-  set_motors(mSpeed);	
+  set_motors();	
 }
