@@ -5,8 +5,8 @@ void rx_init(){
 	attachInterrupt(digitalPinToInterrupt(RX_INT_PIN_PITCH),rxPitch_GoHigh,RISING);
 	attachInterrupt(digitalPinToInterrupt(RX_INT_PIN_YAW),rxYaw_GoHigh,RISING);
 
-        delay(1000);
-        while(ref_lift > 950){led(R_LED,HIGH,2);}//blink
+  delay(1000);
+  while(ref_lift > 950){led(R_LED,HIGH,2);}//blink - safety measure. Lower lift before starting
 }
 
 boolean CheckRxLoss(){
@@ -33,19 +33,23 @@ void update_ControlReferences(){
 	if (ref_roll < 1550 && ref_roll > 1350)
           ref_phi = 0;
         else
-          ref_phi = constrain(map(ref_roll,RxRoll_MIN,RxRoll_MAX,TILT_MIN,TILT_MAX),TILT_MIN,TILT_MAX);
+          ref_phi = constrain(mapf(ref_roll,RxRoll_MIN,RxRoll_MAX,TILT_MIN,TILT_MAX),TILT_MIN,TILT_MAX);
           
         if (ref_pitch < 1600 && ref_pitch > 1400)
           ref_theta = 0;
         else
-          ref_theta = constrain(map(ref_pitch,RxPitch_MIN,RxPitch_MAX,TILT_MIN,TILT_MAX),TILT_MIN,TILT_MAX);
+          ref_theta = constrain(mapf(ref_pitch,RxPitch_MIN,RxPitch_MAX,TILT_MIN,TILT_MAX),TILT_MIN,TILT_MAX);
           
         if (ref_yaw < 1650 && ref_yaw > 1450)
           ref_r = 0;
         else  
-	  ref_r = constrain(map(ref_yaw,RxYaw_MIN,RxYaw_MAX,YawRate_MIN,YawRate_MAX),YawRate_MIN,YawRate_MAX);
+	  ref_r = constrain(mapf(ref_yaw,RxYaw_MIN,RxYaw_MAX,YawRate_MIN,YawRate_MAX),YawRate_MIN,YawRate_MAX);
 }
 
+float mapf(int x, int in_min, int in_max, float out_min, float out_max)
+{
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 void rxLift_GoHigh(){
 

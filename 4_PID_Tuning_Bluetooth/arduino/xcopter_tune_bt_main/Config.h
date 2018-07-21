@@ -67,9 +67,9 @@
 #define RxYaw_MIN 1064
 #define RX_INT_PIN_YAW 19
 
-#define TILT_MAX 30
+#define TILT_MAX 10.0
 #define TILT_MIN -TILT_MAX
-#define YawRate_MAX 5
+#define YawRate_MAX 5.0
 #define YawRate_MIN -YawRate_MAX
 //***************************************
 //***********CONTROL PID CONGIG**************
