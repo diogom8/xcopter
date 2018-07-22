@@ -7,9 +7,9 @@ void ControlPID(){
   float pitch_spd = 0;
   float r_spd = 0;
 
-  if (ref_lift > 1100){
-    lift_spd = constrain(map(ref_lift,RxLift_MIN,RxLift_MAX,MOTOR_MIN_LEVEL,MOTOR_MAX_LEVEL),MOTOR_MIN_LEVEL,MOTOR_MAX_LEVEL);
-
+  //if (ref_lift > 1100){
+    //lift_spd = constrain(map(ref_lift,RxLift_MIN,RxLift_MAX,MOTOR_MIN_LEVEL,MOTOR_MAX_LEVEL),MOTOR_MIN_LEVEL,MOTOR_MAX_LEVEL);
+    lift_spd = constrain(ref_lift,MOTOR_MIN_LEVEL,MOTOR_MAX_LEVEL);
 
     /*Roll Control*/
     float err_phi = ref_phi-phi;
@@ -38,7 +38,7 @@ void ControlPID(){
     float P_r = (float)(kp_r*err_r);
 
     r_spd = P_r;
-  }
+  //}
   /*Motors Speed*/
   mSpeed[0] = lift_spd + roll_spd + pitch_spd + r_spd;
   mSpeed[1] = lift_spd + roll_spd - pitch_spd - r_spd;	

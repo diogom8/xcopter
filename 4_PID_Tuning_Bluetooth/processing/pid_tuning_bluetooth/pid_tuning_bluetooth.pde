@@ -5,20 +5,22 @@ int     lf = 10;       //ASCII linefeed
 String  inString;      //String for testing serial communication
 boolean sendData = false;
 String stop_bt = "0";
-String setGains_bt = "0";
 String stringToSend;
 
 import controlP5.*;
 ControlP5 cp5;
 Toggle stopToggle;
 Textfield text_PGain, text_DGain, text_IGain;
-Bang bang_SetGains;
+Bang bang_SetGains,bang_LiftPlusOne,bang_LiftMinusOne;
 
 float quadScale = 1.5;
 
 int M0Val, M1Val, M2Val, M3Val;
 float kp, ki, kd;
 float phi, ref_phi, theta, ref_theta;
+int ref_lift_spd=100;
+boolean requestData = false;
+int requestDataN = 0;
 
 void setup() {
 
@@ -47,9 +49,11 @@ void setup() {
      .setPosition(800,300)
      .setSize(100,40)
      .setFont(createFont("arial",20))
+     
      .setFocus(true) //not sure what this focus means
      .setCaptionLabel("P")
      .setColorCaptionLabel(0)
+     .setText("0.0")
      ;
      
      text_IGain = cp5.addTextfield("I")
@@ -59,6 +63,7 @@ void setup() {
      .setFocus(true) //not sure what this focus means
      .setCaptionLabel("I")
      .setColorCaptionLabel(0)
+     .setText("0.0")
      ;
      
      text_DGain = cp5.addTextfield("D")
@@ -68,6 +73,7 @@ void setup() {
      .setFocus(true) //not sure what this focus means
      .setCaptionLabel("D")
      .setColorCaptionLabel(0)
+     .setText("0.0")
      ;
      
      //bang to send new controller values
@@ -76,6 +82,20 @@ void setup() {
      .setSize(80,40)
      ;
      bang_SetGains.getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER);
+     
+     bang_LiftPlusOne = cp5.addBang("LiftPlusOne")
+     .setPosition(950,150)
+     .setSize(40,20)
+     ;
+     bang_LiftPlusOne.getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER);
+     bang_LiftPlusOne.setCaptionLabel("+1");
+     
+     bang_LiftMinusOne = cp5.addBang("LiftMinusOne")
+     .setPosition(950,175)
+     .setSize(40,20)
+     ;
+     bang_LiftMinusOne.getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER);
+     bang_LiftMinusOne.setCaptionLabel("-1");
      
     //Setup serial
     printArray(Serial.list());
@@ -103,48 +123,76 @@ void draw()  {
     
     //Current attitude and set points
     textAlign(LEFT);fill(0,0,0);
-    text("Pitch", 800, 150);
-    text("Roll", 950, 150);
+    text("Pitch", 600, 150);
+    text("Roll", 750, 150);
+    text("Lift", 900, 150);
     fill(0,0,255);
-    text((float) phi, 800, 175);
-    text((float) theta, 950, 175);
+    text((float) theta, 600, 175);
+    text((float) phi, 750, 175);
+    
     
     fill(160,160,160);textSize(18);
-    text(ref_theta, 800, 200);
-    text(ref_phi, 950, 200);
+    text(ref_theta, 600, 200);
+    text(ref_phi, 750, 200);
+    
+    fill(0,255,0);
+    text(ref_lift_spd, 900, 175);
     
     //Send data
-    if(sendData == true){sendData();sendData = false;}
+    if(sendData == true || requestData == true){sendData();sendData = false;requestData = false;}
   
 }
 
-public void SET() {
-  //println(stopToggle.getValue());
-  setGains_bt = "1";
+public void LiftPlusOne(){
+  ref_lift_spd = min(ref_lift_spd+1,215);
   sendData = true;
+  //println(ref_lift_spd);
 }
 
+public void LiftMinusOne(){
+  ref_lift_spd = max(ref_lift_spd-1,100);
+  sendData = true;
+  //println(ref_lift_spd);
+}
+public void SET() {
+  //println(stopToggle.getValue());
+  sendData = true;
+}
+public void stopValue() {
+  //println(stopToggle.getValue());
+  if(stopToggle.getBooleanValue()) {
+    stop_bt = "1";
+  }
+  else {
+    stop_bt = "0";
+  }
+  ref_lift_spd=100;
+  sendData = true;
+  //println(stop_bt);
+}
+
+//To send data
 void sendData() {
   String kp_new = text_PGain.getText();
-  //print(kp_new);
+  print(kp_new);
   String ki_new = text_IGain.getText();
   String kd_new = text_DGain.getText();
   
- stringToSend = '#' + stop_bt + setGains_bt + kp_new + ' ' + ki_new + ' ' + kd_new + '*';
+ stringToSend = '#' + stop_bt + kp_new + ' ' + ki_new + ' ' + kd_new + ' ' + ref_lift_spd + '*';
  println(stringToSend);
  myPort.write(stringToSend);
+ delay(500);
 }
 
+//To read received data
 void serialEvent(Serial p) {
 
-    
   inString = p.readString();
   try {
     // Parse the data
     String[] dataString = split(inString, " ");
-    if(dataString[0].equals("#") && dataString.length == 12)
-    {
-      println(inString);
+    if(dataString[0].equals("#") && dataString.length == 13) {
+      print(inString);
       M0Val = int(dataString[1]);
       M1Val = int(dataString[2]);
       M2Val = int(dataString[3]);
@@ -156,6 +204,10 @@ void serialEvent(Serial p) {
       ref_phi = float(dataString[9]);
       theta = float(dataString[10]);
       ref_theta = float(dataString[11]);
+      if((int(dataString[12].charAt(0))-48) > 0){
+          println("HERE");
+          requestData = true;
+        }
     }
     else {
       //Clean buffer
@@ -197,10 +249,10 @@ void drawStatics() {
     
     //Motors tags
     rotate(3.0*PI/4.0); //Original position
-    fill(255,190,0);textSize(15);
+    fill(255,0,0);textSize(15);
     textAlign(CENTER,CENTER);
     text("M0",-cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
-    text("M3",cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);
+    text("M3",cos(PI/4.0)*quadScale*150,-sin(PI/4.0)*quadScale*150);fill(0,0,0);
     text("M2",cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
     text("M1",-cos(PI/4.0)*quadScale*150,sin(PI/4.0)*quadScale*150);
     popMatrix();

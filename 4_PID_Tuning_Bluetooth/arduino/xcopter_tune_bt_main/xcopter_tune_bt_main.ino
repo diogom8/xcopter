@@ -39,7 +39,6 @@ unsigned long timer_rx = 0;
 unsigned long timer_bt = 0;
 float max_t = 0;
 unsigned long proof_t = 0;
-int ZeromSpeed[4] = {MOTOR_MIN_LEVEL};
 
 /*Control Tuning*/
 float kp = 0.0;
@@ -54,22 +53,24 @@ float bd = -kd/(kd+N*T_LOOP);
 
 /* Read data via Bluetooh */
 boolean stop_bt = false;
-boolean setGains_bt = false;
+boolean requestData = false;
 String readString;
 
 void setup() {
     // setup serial
     //Serial.begin(115200);
+
+    // setup bluetooth serial
     BTSerial.begin(9600);
 
     leds_init();
     led(G_LED,HIGH,0);
-    //calibrate_motors();
+    calibrate_motors();
     //arm_motors();
     led(R_LED,HIGH,2); //blink*/
     calibrate_sensors();
     led(R_LED,HIGH,2); //blink
-    rx_init();
+    //rx_init();
     led(G_LED,LOW,0);
     timer_control = millis();
     timer_rx = millis();
@@ -96,6 +97,9 @@ void loop() {
         for(int i=0;i<4;i++){
           mSpeed[i] = MOTOR_MIN_LEVEL;
           mSpeedSat[i] = MOTOR_MIN_LEVEL;
+          //Reset PID accumulators
+          I_roll = 0.0, D_roll = 0.0;
+          I_pitch = 0.0,D_pitch = 0.0;
         }
         set_motors();
                     
@@ -103,13 +107,14 @@ void loop() {
       
      }
      
-    if((millis()-timer_rx)/1000.0 >= T_RX)
+    /* For tuning purposes will only use the bluetooth comm with the PC, so skip this part*/
+    /*if((millis()-timer_rx)/1000.0 >= T_RX)
     {
       timer_rx = millis();
       update_ControlReferences();
       RxLoss_flag = CheckRxLoss();
       
-    }
+    }*/
     
     
     //Send data
@@ -127,11 +132,11 @@ void loop() {
       BTSerial.print(F(" "));
       BTSerial.print(mSpeedSat[3]);//motor 3 speed
       BTSerial.print(F(" "));
-      BTSerial.print(kp,2);//p gain
+      BTSerial.print(kp,3);//p gain
       BTSerial.print(F(" "));
-      BTSerial.print(ki,2);//i gain
+      BTSerial.print(ki,3);//i gain
       BTSerial.print(F(" "));
-      BTSerial.print(kd,2);//d gain
+      BTSerial.print(kd,3);//d gain
       BTSerial.print(F(" "));
       BTSerial.print(phi,2);//phi (roll)
       BTSerial.print(F(" "));
@@ -140,10 +145,12 @@ void loop() {
       BTSerial.print(theta,2);//theta (pitch)
       BTSerial.print(F(" "));
       BTSerial.print(ref_theta,2);//theta reference (pitch)
+      BTSerial.print(F(" "));
+      BTSerial.print(requestData);requestData = false;//requestData due to failure in comm 
       BTSerial.println(F(""));
     }
 
-    //Read data (the data we receive is 18 bytes long + carriage return)
+    //Read data
     if(BTSerial.available())
     {
       char c = BTSerial.read();
@@ -159,25 +166,30 @@ void loop() {
             stop_bt = false;
           }
           //Set gains
-          if(readString.substring(2, 3)  == "1"){
-            setGains_bt = true;
-            int ind1 = readString.indexOf(' ');  //finds location of first Space
-            kp = readString.substring(3, ind1).toFloat();
-            int ind2 = readString.indexOf(' ',ind1+1);  //finds location of second Space
-            ki = readString.substring(ind1+1, ind2).toFloat();
-            int ind3 = readString.indexOf('*',ind2+1);  //finds location of termination char *
-            kd = readString.substring(ind2+1, ind3).toFloat();
-          }
-          else{
-            setGains_bt = false;
-          }
+          int ind1 = readString.indexOf(' ');  //finds location of first Space
+          kp = readString.substring(2, ind1).toFloat();
+          int ind2 = readString.indexOf(' ',ind1+1);  //finds location of second Space
+          ki = readString.substring(ind1+1, ind2).toFloat();
+          int ind3 = readString.indexOf(' ',ind2+1);  //finds location of third Space 
+          kd = readString.substring(ind2+1, ind3).toFloat();
+          int ind4 = readString.indexOf('*',ind3+1);  //finds location of the terminating character
+          ref_lift = readString.substring(ind3+1, ind4).toInt();
+
+          //Also update parameters dependent on the gains: ai, ad, bd
+          ai = ki*T_LOOP;
+          ad = kd/(kd+N*T_LOOP);
+          bd = -kd/(kd+N*T_LOOP);
                     
         }
         //Clean buffer
-        while(Serial.available()>0){Serial.read();}
+        while(BTSerial.available()>0){BTSerial.read();}
         readString=""; //clears variable for new input
         digitalWrite(R_LED,!digitalRead(R_LED));
         
+      }
+      else if (c != '#' && c != '.' && c != ' ' && (c < 48 || c > 57)){ //Received bad data so will ask for data again
+        readString = "";
+        requestData = true;
       }
       else{
         readString += c; //makes the string readString
